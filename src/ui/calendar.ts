@@ -93,17 +93,34 @@ function openListViewMenu(anchorEl: HTMLElement, calendar: Calendar): void {
 
     document.body.appendChild(menu);
 
+    const margin = 8;
+    const gap = 2;
     const anchor = anchorEl.getBoundingClientRect();
     const menuWidth = menu.offsetWidth;
+    const menuHeight = menu.offsetHeight;
+
     let left = anchor.left;
-    if (left + menuWidth > window.innerWidth - 8) {
-        left = window.innerWidth - menuWidth - 8;
+    if (left + menuWidth > window.innerWidth - margin) {
+        left = window.innerWidth - menuWidth - margin;
     }
-    if (left < 8) {
-        left = 8;
+    if (left < margin) {
+        left = margin;
     }
     menu.style.left = `${left}px`;
-    menu.style.top = `${anchor.bottom + 2}px`;
+
+    // Open below the anchor by default; flip above when the footer/toolbar is at
+    // the bottom (mobile) so items stay reachable.
+    let top = anchor.bottom + gap;
+    if (top + menuHeight > window.innerHeight - margin) {
+        top = anchor.top - menuHeight - gap;
+    }
+    if (top < margin) {
+        top = margin;
+    }
+    if (top + menuHeight > window.innerHeight - margin) {
+        top = Math.max(margin, window.innerHeight - margin - menuHeight);
+    }
+    menu.style.top = `${top}px`;
 
     listMenuDocClickListener = (ev: MouseEvent) => {
         const t = ev.target as Node;

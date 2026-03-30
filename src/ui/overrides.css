@@ -85,6 +85,8 @@
 	position: fixed;
 	z-index: 50;
 	min-width: 8rem;
+	max-height: min(50vh, 16rem);
+	overflow-y: auto;
 	display: flex;
 	flex-direction: column;
 	gap: 2px;
