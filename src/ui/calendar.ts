@@ -113,18 +113,18 @@ export function renderCalendar(
             ? {
                   left: "prev,next today",
                   center: "title",
-                  right: "dayGridMonth,timeGridWeek,timeGridDay,listWeek",
+                  right: "dayGridMonth,timeGridWeek,timeGridDay,listWeek,listMonth,listAll",
               }
             : !isMobile
             ? {
                   right: "today,prev,next",
-                  left: "timeGrid3Days,timeGridDay,listWeek",
+                  left: "timeGrid3Days,timeGridDay,listWeek,listMonth,listAll",
               }
             : false,
         footerToolbar: isMobile
             ? {
                   right: "today,prev,next",
-                  left: "timeGrid3Days,timeGridDay,listWeek",
+                  left: "timeGrid3Days,timeGridDay,listWeek,listMonth,listAll",
               }
             : false,
 
@@ -138,6 +138,22 @@ export function renderCalendar(
                 type: "timeGrid",
                 duration: { days: 3 },
                 buttonText: "3",
+            },
+            // FullCalendar's listWeek / listMonth only show events in the visible
+            // interval. listAll uses a wide fixed range so every cached event appears.
+            listWeek: {
+                buttonText: isNarrow ? "Wk" : "List (week)",
+            },
+            listMonth: {
+                buttonText: isNarrow ? "Mo" : "List (month)",
+            },
+            listAll: {
+                type: "list",
+                buttonText: isNarrow ? "All" : "List (all)",
+                visibleRange: () => ({
+                    start: new Date(1990, 0, 1),
+                    end: new Date(2060, 11, 31, 23, 59, 59, 999),
+                }),
             },
         },
         firstDay: settings?.firstDay,

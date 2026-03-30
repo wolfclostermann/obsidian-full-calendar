@@ -56,12 +56,16 @@ const INITIAL_VIEW_OPTIONS = {
         timeGridDay: "Day",
         timeGridWeek: "Week",
         dayGridMonth: "Month",
-        listWeek: "List",
+        listWeek: "List (week)",
+        listMonth: "List (month)",
+        listAll: "List (all events)",
     },
     MOBILE: {
         timeGrid3Days: "3 Days",
         timeGridDay: "Day",
-        listWeek: "List",
+        listWeek: "List (week)",
+        listMonth: "List (month)",
+        listAll: "List (all events)",
     },
 };
 
