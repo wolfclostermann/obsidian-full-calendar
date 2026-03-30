@@ -35,6 +35,100 @@ rrulePlugin.recurringTypes[0].expand = function (errd, fr, de) {
         });
 };
 
+const LIST_VIEW_TYPES = ["listWeek", "listMonth", "listAll"] as const;
+
+let listMenuDocClickListener: ((ev: MouseEvent) => void) | null = null;
+
+function closeListViewMenu(): void {
+    document
+        .querySelectorAll(".ofc-list-view-menu")
+        .forEach((el) => el.remove());
+    if (listMenuDocClickListener) {
+        document.removeEventListener("click", listMenuDocClickListener, true);
+        listMenuDocClickListener = null;
+    }
+}
+
+function syncListMenuButtonActive(viewType: string): void {
+    const isListView = LIST_VIEW_TYPES.some((v) => v === viewType);
+    document.querySelectorAll(".fc-listMenu-button").forEach((el) => {
+        if (isListView) {
+            el.classList.add("fc-button-active");
+        } else {
+            el.classList.remove("fc-button-active");
+        }
+    });
+}
+
+function openListViewMenu(anchorEl: HTMLElement, calendar: Calendar): void {
+    closeListViewMenu();
+    const menu = document.createElement("div");
+    menu.className = "ofc-list-view-menu";
+    menu.setAttribute("role", "menu");
+
+    const currentType = calendar.view?.type;
+    const items: { view: (typeof LIST_VIEW_TYPES)[number]; label: string }[] = [
+        { view: "listWeek", label: "Week" },
+        { view: "listMonth", label: "Month" },
+        { view: "listAll", label: "All" },
+    ];
+
+    for (const { view, label } of items) {
+        const row = document.createElement("button");
+        row.type = "button";
+        row.className = "ofc-list-view-menu-item";
+        row.textContent = label;
+        row.setAttribute("role", "menuitem");
+        if (currentType === view) {
+            row.classList.add("is-active");
+        }
+        row.addEventListener("click", (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            calendar.changeView(view);
+            closeListViewMenu();
+        });
+        menu.appendChild(row);
+    }
+
+    document.body.appendChild(menu);
+
+    const anchor = anchorEl.getBoundingClientRect();
+    const menuWidth = menu.offsetWidth;
+    let left = anchor.left;
+    if (left + menuWidth > window.innerWidth - 8) {
+        left = window.innerWidth - menuWidth - 8;
+    }
+    if (left < 8) {
+        left = 8;
+    }
+    menu.style.left = `${left}px`;
+    menu.style.top = `${anchor.bottom + 2}px`;
+
+    listMenuDocClickListener = (ev: MouseEvent) => {
+        const t = ev.target as Node;
+        if (menu.contains(t)) {
+            return;
+        }
+        const btn = document.querySelector(".fc-listMenu-button");
+        if (btn?.contains(t)) {
+            return;
+        }
+        closeListViewMenu();
+    };
+    window.setTimeout(() => {
+        document.addEventListener("click", listMenuDocClickListener!, true);
+    }, 0);
+}
+
+function toggleListViewMenu(anchorEl: HTMLElement, calendar: Calendar): void {
+    if (document.querySelector(".ofc-list-view-menu")) {
+        closeListViewMenu();
+        return;
+    }
+    openListViewMenu(anchorEl, calendar);
+}
+
 interface ExtraRenderProps {
     eventClick?: (info: EventClickArg) => void;
     select?: (
@@ -88,6 +182,8 @@ export function renderCalendar(
             }
         });
 
+    const calendarRef: { current: Calendar | null } = { current: null };
+
     const cal = new Calendar(containerEl, {
         plugins: [
             // View plugins
@@ -113,20 +209,35 @@ export function renderCalendar(
             ? {
                   left: "prev,next today",
                   center: "title",
-                  right: "dayGridMonth,timeGridWeek,timeGridDay,listWeek,listMonth,listAll",
+                  right: "dayGridMonth,timeGridWeek,timeGridDay,listMenu",
               }
             : !isMobile
             ? {
                   right: "today,prev,next",
-                  left: "timeGrid3Days,timeGridDay,listWeek,listMonth,listAll",
+                  left: "timeGrid3Days,timeGridDay,listMenu",
               }
             : false,
         footerToolbar: isMobile
             ? {
                   right: "today,prev,next",
-                  left: "timeGrid3Days,timeGridDay,listWeek,listMonth,listAll",
+                  left: "timeGrid3Days,timeGridDay,listMenu",
               }
             : false,
+
+        customButtons: {
+            listMenu: {
+                text: isNarrow ? "List" : "List ▾",
+                hint: "List view: week, month, or all events",
+                click(ev, element) {
+                    ev.preventDefault();
+                    ev.stopPropagation();
+                    const api = calendarRef.current;
+                    if (api) {
+                        toggleListViewMenu(element, api);
+                    }
+                },
+            },
+        },
 
         views: {
             timeGridDay: {
@@ -141,20 +252,25 @@ export function renderCalendar(
             },
             // FullCalendar's listWeek / listMonth only show events in the visible
             // interval. listAll uses a wide fixed range so every cached event appears.
+            // These views are opened from the listMenu toolbar dropdown.
             listWeek: {
-                buttonText: isNarrow ? "Wk" : "List (week)",
+                buttonText: "Week",
             },
             listMonth: {
-                buttonText: isNarrow ? "Mo" : "List (month)",
+                buttonText: "Month",
             },
             listAll: {
                 type: "list",
-                buttonText: isNarrow ? "All" : "List (all)",
+                buttonText: "All",
                 visibleRange: () => ({
                     start: new Date(1990, 0, 1),
                     end: new Date(2060, 11, 31, 23, 59, 59, 999),
                 }),
             },
+        },
+
+        viewDidMount: (arg) => {
+            syncListMenuButtonActive(arg.view.type);
         },
         firstDay: settings?.firstDay,
         ...(settings?.timeFormat24h && {
@@ -237,6 +353,8 @@ export function renderCalendar(
 
         longPressDelay: 250,
     });
+    calendarRef.current = cal;
     cal.render();
+    syncListMenuButtonActive(cal.view.type);
     return cal;
 }

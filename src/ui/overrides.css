@@ -80,3 +80,40 @@
 	border-color: black !important;
 	border-width: 1px !important;
 }
+
+.ofc-list-view-menu {
+	position: fixed;
+	z-index: 50;
+	min-width: 8rem;
+	display: flex;
+	flex-direction: column;
+	gap: 2px;
+	padding: var(--size-4-2);
+	background-color: var(--background-primary);
+	border: 1px solid var(--background-modifier-border);
+	border-radius: var(--radius-s);
+	box-shadow: var(--shadow-s);
+}
+
+.ofc-list-view-menu-item {
+	display: block;
+	width: 100%;
+	text-align: left;
+	margin: 0;
+	padding: var(--size-4-2) var(--size-4-3);
+	font-size: var(--font-ui-small);
+	color: var(--text-normal);
+	background-color: var(--interactive-normal);
+	border: none;
+	border-radius: var(--radius-s);
+	cursor: pointer;
+}
+
+.ofc-list-view-menu-item:hover {
+	background-color: var(--interactive-hover);
+}
+
+.ofc-list-view-menu-item.is-active {
+	background-color: var(--interactive-accent);
+	color: var(--text-on-accent);
+}
